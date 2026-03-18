@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marketing Co-Pilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f9f8f5;
+    --surface: #ffffff;
+    --surface2: #f2f0eb;
+    --border: #e4e0d8;
+    --border2: #ccc9bf;
+    --text: #1a1916;
+    --text2: #6b6860;
+    --text3: #9e9b93;
+    --accent: #1a1916;
+    --accent-fg: #ffffff;
+    --green-bg: #eaf4e8; --green-text: #2a6b28;
+    --blue-bg: #e8f0fa; --blue-text: #1d4d8c;
+    --amber-bg: #fdf3e0; --amber-text: #7a4f0a;
+    --purple-bg: #f0eeff; --purple-text: #4a3ab5;
+    --red-bg: #fdecea; --red-text: #8c2a22;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); padding: 0.25rem 0.75rem 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 0.5rem; }
+  .sidebar-logo span { display: block; font-family: 'DM Sans', sans-serif; font-size: 11px; color: var(--text3); font-weight: 400; margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; color: var(--text2); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent); color: var(--accent-fg); }
+  .nav-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-section { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 1rem 0.75rem 0.25rem; }
+
+  /* Main content */
+  .main { padding: 2rem 2.5rem; max-width: 820px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: var(--text2); margin-bottom: 1.75rem; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--text2); margin-bottom: 1rem; }
+
+  /* Form */
+  .form-grid { display: grid; gap: 14px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input, .field textarea, .field select {
+    width: 100%; padding: 9px 12px; font-size: 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--border2); }
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; font-size: 14px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; background: var(--surface); color: var(--text); transition: all 0.15s; font-weight: 500; }
+  .btn:hover { background: var(--surface2); border-color: var(--border2); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .btn-primary:hover { opacity: 0.88; background: var(--accent); }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  /* AI Output */
+  .ai-output { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem 1.25rem; font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; margin-top: 1rem; }
+  .ai-output.loading { color: var(--text3); font-style: italic; }
+  .ai-output.error { color: var(--red-text); background: var(--red-bg); border-color: #f5c5c0; }
+
+  /* Metrics */
+  .metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .metric { background: var(--surface2); border-radius: var(--radius-sm); padding: 0.875rem 1rem; }
+  .metric-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--text); }
+  .progress-wrap { background: var(--border); border-radius: 99px; height: 5px; margin-top: 6px; }
+  .progress-bar { height: 5px; border-radius: 99px; background: var(--accent); transition: width 0.4s; }
+
+  /* Tasks */
+  .task-list { display: grid; gap: 8px; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+  .task-check { width: 17px; height: 17px; border: 1.5px solid var(--border2); border-radius: 4px; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.15s; }
+  .task-check.done { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .task-text { font-size: 14px; flex: 1; line-height: 1.5; }
+  .task-text.done { text-decoration: line-through; color: var(--text3); }
+  .task-tag { font-size: 11px; padding: 2px 8px; border-radius: 99px; flex-shrink: 0; font-weight: 500; }
+  .tag-seo { background: var(--green-bg); color: var(--green-text); }
+  .tag-social { background: var(--blue-bg); color: var(--blue-text); }
+  .tag-ads { background: var(--amber-bg); color: var(--amber-text); }
+  .tag-copy { background: var(--purple-bg); color: var(--purple-text); }
+
+  /* Competitors */
+  .comp-entry { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; font-size: 14px; background: var(--surface); }
+  .comp-entry span { flex: 1; }
+  .remove-link { font-size: 12px; color: var(--text3); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+  .remove-link:hover { color: var(--red-text); background: var(--red-bg); }
+
+  /* Content history */
+  .history-item { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer; transition: background 0.1s; }
+  .history-item:hover { background: var(--surface2); }
+  .history-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .history-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 14px; }
+  .inline-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .inline-row .field { flex: 1; min-width: 150px; }
+
+  .badge { display: inline-flex; font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 500; }
+  .badge-saved { background: var(--green-bg); color: var(--green-text); }
+
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 0.75rem; }
+    .sidebar-logo { display: none; }
+    .main { padding: 1rem; }
+    .two-col { grid-template-columns: 1fr; }
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">Co-Pilot <span>Local business marketing</span></div>
+    <div class="nav-section">Setup</div>
+    <button class="nav-item active" onclick="showPage('setup', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Business setup
+    </button>
+    <div class="nav-section">Strategy</div>
+    <button class="nav-item" onclick="showPage('roadmap', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      Growth roadmap
+    </button>
+    <button class="nav-item" onclick="showPage('competitors', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5 3"/></svg>
+      Competitors
+    </button>
+    <div class="nav-section">Content</div>
+    <button class="nav-item" onclick="showPage('create', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Create content
+    </button>
+    <button class="nav-item" onclick="showPage('analyze', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analyze & improve
+    </button>
+    <div class="nav-section">Workflow</div>
+    <button class="nav-item" onclick="showPage('tasks', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Task tracker
+    </button>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- SETUP -->
+    <div id="page-setup" class="page active">
+      <div class="page-title">Business setup</div>
+      <div class="page-sub">This context powers every AI suggestion in the app. Fill it in once, update any time.</div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="two-col">
+            <div class="field"><label>Business name</label><input id="biz-name" placeholder="e.g. Peak Plumbing Co." /></div>
+            <div class="field"><label>Industry / service type</label><input id="biz-industry" placeholder="e.g. Plumbing, HVAC, Landscaping..." /></div>
+          </div>
+          <div class="two-col">
+            <div class="field"><label>City & state</label><input id="biz-location" placeholder="e.g. Fort Collins, CO" /></div>
+            <div class="field"><label>Target customers</label><input id="biz-customers" placeholder="e.g. Homeowners, property managers..." /></div>
+          </div>
+          <div class="field"><label>Key services offered</label><textarea id="biz-services" placeholder="List your main services..."></textarea></div>
+          <div class="field"><label>What makes you different? (optional)</label><textarea id="biz-usp" placeholder="e.g. Same-day service, family-owned 20 years, licensed & insured..."></textarea></div>
+          <div class="field"><label>Website URL (optional)</label><input id="biz-url" placeholder="https://..." /></div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-primary" id="save-btn" onclick="saveBiz()">Save profile</button>
+            <span id="save-badge" style="display:none;" class="badge badge-saved">Saved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROADMAP -->
+    <div id="page-roadmap" class="page">
+      <div class="page-title">Growth roadmap</div>
+      <div class="page-sub">A personalized 90-day plan built for starting from zero online presence.</div>
+      <div class="card">
+        <div class="card-sub">Save your business profile first, then generate your roadmap. Regenerate any time to refresh.</div>
+        <button class="btn btn-primary" id="roadmap-btn" onclick="generateRoadmap()">Generate my roadmap ↗</button>
+        <div id="roadmap-output"></div>
+      </div>
+    </div>
+
+    <!-- COMPETITORS -->
+    <div id="page-competitors" class="page">
+      <div class="page-title">Competitor research</div>
+      <div class="page-sub">Add local competitors and uncover gaps, threats, and opportunities.</div>
+      <div class="card">
+        <div class="card-title">Add competitors</div>
+        <div class="card-sub">Enter names of businesses you compete with locally. Website is optional but helps.</div>
+        <div class="inline-row" style="margin-bottom:0.75rem;">
+          <div class="field"><label>Competitor name</label><input id="comp-name" placeholder="e.g. Acme Plumbing" onkeydown="if(event.key==='Enter')addCompetitor()" /></div>
+          <div class="field"><label>Their website (optional)</label><input id="comp-url" placeholder="https://..." onkeydown="if(event.key==='Enter')addCompetitor()" /></div>
+          <button class="btn btn-sm" onclick="addCompetitor()" style="margin-bottom:0;">+ Add</button>
+        </div>
+        <div id="comp-list" style="margin-bottom:1rem;"></div>
+        <div class="inline-row" style="margin-bottom:0;">
+          <div class="field" style="max-width:260px;">
+            <label>Analysis focus</label>
+            <select id="comp-focus">
+              <option value="full">Full competitive analysis</option>
+              <option value="seo">SEO & keyword gaps</option>
+              <option value="social">Social media positioning</option>
+              <option value="ads">Ad strategy comparison</option>
+              <option value="positioning">Brand positioning & messaging</option>
+              <option value="opportunities">Untapped opportunities</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="analyzeCompetitors()" id="comp-btn" style="margin-bottom:0;">Analyze ↗</button>
+        </div>
+        <div id="comp-output"></div>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div id="page-create" class="page">
+      <div class="page-title">Create content</div>
+      <div class="page-sub">Generate SEO posts, social captions, ad copy, and website content instantly.</div>
+      <div class="card">
+        <div class="inline-row" style="margin-bottom:1rem;">
+          <div class="field" style="max-width:220px;">
+            <label>Content type</label>
+            <select id="content-type">
+              <option value="seo_blog">SEO blog post</option>
+              <option value="social_facebook">Facebook post</option>
+              <option value="social_instagram">Instagram caption</option>
+              <option value="google_ad">Google ad copy</option>
+              <option value="meta_ad">Meta ad copy</option>
+              <option value="homepage_hero">Homepage hero copy</option>
+              <option value="service_page">Service page copy</option>
+              <option value="google_bio">Google Business bio</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Topic or focus keyword</label>
+            <input id="content-topic" placeholder="e.g. emergency drain repair Fort Collins" onkeydown="if(event.key==='Enter')generateContent()" />
+          </div>
+          <button class="btn btn-primary" onclick="generateContent()" id="create-btn" style="margin-bottom:0;">Generate ↗</button>
+        </div>
+        <div id="create-output"></div>
+      </div>
+      <div id="create-history-wrap" style="display:none;">
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:8px;">Recent generations</div>
+        <div id="create-history"></div>
+      </div>
+    </div>
+
+    <!-- ANALYZE -->
+    <div id="page-analyze" class="page">
+      <div class="page-title">Analyze & improve</div>
+      <div class="page-sub">Get scored recommendations to improve your online performance.</div>
+      <div class="card">
+        <div class="inline-row" style="margin-bottom:1rem;">
+          <div class="field">
+            <label>Website URL to analyze</label>
+            <input id="analyze-url" placeholder="https://  (leave blank if no site yet)" />
+          </div>
+          <div class="field" style="max-width:230px;">
+            <label>Focus area</label>
+            <select id="analyze-focus">
+              <option value="overall">Overall online presence</option>
+              <option value="seo">SEO & search visibility</option>
+              <option value="conversion">Conversion & copy</option>
+              <option value="local">Local search / Google Business</option>
+              <option value="social">Social media strategy</option>
+              <option value="ads">Paid advertising readiness</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="analyzePresence()" id="analyze-btn" style="margin-bottom:0;">Analyze ↗</button>
+        </div>
+        <div id="analyze-output"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="page-tasks" class="page">
+      <div class="page-title">Task tracker</div>
+      <div class="page-sub">Marketing tasks generated from your roadmap and analysis. Check them off as you go.</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="card-title" style="margin:0;">Your marketing tasks</div>
+          <button class="btn btn-sm" onclick="generateTasks()" id="tasks-gen-btn">+ AI suggestions ↗</button>
+        </div>
+        <div id="task-metrics"></div>
+        <div id="task-list-container"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+let bizProfile = {};
+let tasks = [];
+let contentHistory = [];
+let competitors = [];
+
+function showPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  el.classList.add('active');
+  if (page === 'tasks') renderTasks();
+  if (page === 'competitors') renderCompList();
+}
+
+function saveBiz() {
+  bizProfile = {
+    name: document.getElementById('biz-name').value,
+    industry: document.getElementById('biz-industry').value,
+    location: document.getElementById('biz-location').value,
+    customers: document.getElementById('biz-customers').value,
+    services: document.getElementById('biz-services').value,
+    usp: document.getElementById('biz-usp').value,
+    url: document.getElementById('biz-url').value
+  };
+  const badge = document.getElementById('save-badge');
+  badge.style.display = 'inline-flex';
+  setTimeout(() => badge.style.display = 'none', 3000);
+}
+
+function getBizContext() {
+  return `Business name: ${bizProfile.name || 'Local service business'}
+Industry: ${bizProfile.industry || 'Service-based'}
+Location: ${bizProfile.location || 'Local area'}
+Target customers: ${bizProfile.customers || 'Local homeowners and businesses'}
+Services offered: ${bizProfile.services || 'Professional services'}
+Differentiators: ${bizProfile.usp || 'Quality service'}
+Current website: ${bizProfile.url || 'None yet'}`;
+}
+
+async function callClaude(system, userMsg, outputEl, btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) btn.disabled = true;
+  outputEl.innerHTML = '<div class="ai-output loading">Thinking...</div>';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      outputEl.innerHTML = `<div class="ai-output error">Error: ${err.error || res.statusText}. Check your ANTHROPIC_API_KEY in Vercel environment variables.</div>`;
+      return null;
+    }
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || 'No response.';
+    outputEl.innerHTML = '<div class="ai-output">' + text.replace(/\n/g, '<br>') + '</div>';
+    return text;
+  } catch (e) {
+    outputEl.innerHTML = '<div class="ai-output error">Connection error: ' + e.message + '</div>';
+    return null;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function callClaudeJSON(system, userMsg, btnId) {
+  const btn = document.getElementById(btnId);
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || '[]';
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch (e) { return null; }
+  finally { if (btn) btn.disabled = false; }
+}
+
+async function generateRoadmap() {
+  const out = document.getElementById('roadmap-output');
+  await callClaude(
+    'You are a local business marketing strategist who creates clear, practical, motivating roadmaps.',
+    `Here is the business:\n${getBizContext()}\n\nThis business is starting from ZERO online presence. Create a clear 90-day marketing roadmap structured in 3 phases:\n- Month 1: Foundation\n- Month 2: Growth\n- Month 3: Optimize & Scale\n\nFor each phase, give 3-4 specific, actionable priorities with a brief reason each matters. Cover: Google Business Profile, website/SEO, social media, and ads. Use plain text with clear headers. Be encouraging and specific.`,
+    out, 'roadmap-btn'
+  );
+}
+
+async function generateContent() {
+  const type = document.getElementById('content-type').value;
+  const topic = document.getElementById('content-topic').value.trim();
+  const out = document.getElementById('create-output');
+  if (!topic) { out.innerHTML = '<div class="ai-output loading">Please enter a topic or keyword first.</div>'; return; }
+  const typeLabels = {
+    seo_blog: 'SEO-optimized blog post (around 800 words, with H2 subheadings)',
+    social_facebook: 'engaging Facebook post (150-250 words)',
+    social_instagram: 'Instagram caption with 10-15 relevant hashtags',
+    google_ad: 'Google search ad — 3 headlines (max 30 chars each) and 2 descriptions (max 90 chars each)',
+    meta_ad: 'Meta/Facebook ad — primary text (100 words) and a punchy headline',
+    homepage_hero: 'homepage hero section: main headline, supporting subheadline, and CTA button text',
+    service_page: 'service page copy: intro paragraph, 4 key benefits, and a closing CTA',
+    google_bio: 'Google Business Profile description (under 750 characters, keyword-rich)'
+  };
+  const result = await callClaude(
+    'You are an expert local service business marketing copywriter. Write compelling, conversion-focused content that sounds human and locally relevant.',
+    `Business context:\n${getBizContext()}\n\nWrite a ${typeLabels[type]} about: "${topic}"\n\nMake it locally relevant, naturally include the keyword, and focus on converting local customers. Use plain text.`,
+    out, 'create-btn'
+  );
+  if (result) {
+    const label = document.getElementById('content-type').options[document.getElementById('content-type').selectedIndex].text;
+    contentHistory.unshift({ label, topic, result, date: new Date().toLocaleDateString() });
+    renderHistory();
+  }
+}
+
+function renderHistory() {
+  const wrap = document.getElementById('create-history-wrap');
+  const el = document.getElementById('create-history');
+  if (!contentHistory.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  el.innerHTML = contentHistory.slice(0, 6).map((h, i) =>
+    `<div class="history-item" onclick="showHistory(${i})"><div class="history-label">${h.label}: ${h.topic}</div><div class="history-meta">${h.date}</div></div>`
+  ).join('');
+}
+
+function showHistory(i) {
+  document.getElementById('create-output').innerHTML = '<div class="ai-output">' + contentHistory[i].result.replace(/\n/g, '<br>') + '</div>';
+}
+
+async function analyzePresence() {
+  const url = document.getElementById('analyze-url').value.trim();
+  const focus = document.getElementById('analyze-focus').value;
+  const out = document.getElementById('analyze-output');
+  const focusLabels = { overall: 'overall online presence', seo: 'SEO and search visibility', conversion: 'conversion rate and copy quality', local: 'local search and Google Business Profile', social: 'social media strategy', ads: 'paid advertising readiness' };
+  await callClaude(
+    'You are a digital marketing analyst specializing in local service businesses. Be honest, specific, and practical.',
+    `Business context:\n${getBizContext()}\n${url ? 'Website: ' + url : 'Note: No website exists yet.'}\n\nFocus: ${focusLabels[focus]}\n\nProvide:\n1. Situation assessment (be direct about gaps)\n2. Top 5 improvement recommendations, prioritized by impact\n3. Three quick wins they can do this week\n4. Performance score 1–10 with one-line reasoning\n\nUse plain text with clear headers.`,
+    out, 'analyze-btn'
+  );
+}
+
+function addCompetitor() {
+  const name = document.getElementById('comp-name').value.trim();
+  const url = document.getElementById('comp-url').value.trim();
+  if (!name) return;
+  competitors.push({ name, url, id: Date.now() });
+  document.getElementById('comp-name').value = '';
+  document.getElementById('comp-url').value = '';
+  renderCompList();
+}
+
+function removeCompetitor(id) {
+  competitors = competitors.filter(c => c.id !== id);
+  renderCompList();
+}
+
+function renderCompList() {
+  const el = document.getElementById('comp-list');
+  if (!competitors.length) { el.innerHTML = ''; return; }
+  el.innerHTML = competitors.map(c =>
+    `<div class="comp-entry"><span>${c.name}${c.url ? ' <span style="color:var(--text3);font-size:13px;">— ' + c.url + '</span>' : ''}</span><span class="remove-link" onclick="removeCompetitor(${c.id})">remove</span></div>`
+  ).join('');
+}
+
+async function analyzeCompetitors() {
+  const out = document.getElementById('comp-output');
+  if (!competitors.length) { out.innerHTML = '<div class="ai-output loading">Add at least one competitor above first.</div>'; return; }
+  const focus = document.getElementById('comp-focus').value;
+  const compList = competitors.map(c => `- ${c.name}${c.url ? ' (' + c.url + ')' : ''}`).join('\n');
+  const focusLabels = { full: 'a full competitive analysis', seo: 'SEO and keyword gap analysis', social: 'social media positioning comparison', ads: 'paid advertising strategy comparison', positioning: 'brand positioning and messaging differences', opportunities: 'untapped market opportunities vs competitors' };
+  await callClaude(
+    'You are a competitive intelligence analyst for local service businesses. Be specific, honest, and actionable.',
+    `My business:\n${getBizContext()}\n\nCompetitors:\n${compList}\n\nProvide ${focusLabels[focus]}.\n\nInclude:\n1. How each competitor is likely positioned online\n2. Gaps and weaknesses I can exploit\n3. Threats I should watch\n4. My top 3 strategic moves to differentiate and win\n\nUse plain text with clear headers. Base analysis on their business types and locations.`,
+    out, 'comp-btn'
+  );
+}
+
+async function generateTasks() {
+  const btn = document.getElementById('tasks-gen-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  const compContext = competitors.length ? 'Competitors known: ' + competitors.map(c => c.name).join(', ') : '';
+  const result = await callClaudeJSON(
+    'You are a marketing strategist. Respond ONLY with a valid JSON array. No markdown, no explanation, no preamble.',
+    `Business:\n${getBizContext()}\n${compContext}\n\nGenerate 8 specific, actionable marketing tasks for a local service business starting from zero. Mix across: seo, social, ads, copy.\n\nReturn ONLY this JSON array:\n[{"task":"description","category":"seo|social|ads|copy","priority":"high|medium|low"}]`,
+    'tasks-gen-btn'
+  );
+  if (result && Array.isArray(result)) {
+    result.forEach(t => tasks.push({ ...t, done: false, id: Date.now() + Math.random() }));
+    renderTasks();
+  } else {
+    alert('Could not generate tasks — please try again.');
+  }
+  btn.disabled = false;
+  btn.textContent = '+ AI suggestions ↗';
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) t.done = !t.done;
+  renderTasks();
+}
+
+function renderTasks() {
+  const el = document.getElementById('task-list-container');
+  const metrics = document.getElementById('task-metrics');
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  if (total > 0) {
+    metrics.innerHTML = `<div class="metrics-row"><div class="metric"><div class="metric-label">Total tasks</div><div class="metric-value">${total}</div></div><div class="metric"><div class="metric-label">Completed</div><div class="metric-value">${done}</div></div><div class="metric"><div class="metric-label">Progress</div><div class="metric-value">${pct}%</div><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div></div></div>`;
+  }
+  if (!tasks.length) { el.innerHTML = '<div class="empty-state">No tasks yet — click "+ AI suggestions" to generate a personalized task list.</div>'; return; }
+  const tagClass = { seo: 'tag-seo', social: 'tag-social', ads: 'tag-ads', copy: 'tag-copy' };
+  const tagLabel = { seo: 'SEO', social: 'Social', ads: 'Ads', copy: 'Copy' };
+  const sorted = [...tasks].sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] ?? 1) - ({ high: 0, medium: 1, low: 2 }[b.priority] ?? 1));
+  el.innerHTML = '<div class="task-list">' + sorted.map(t =>
+    `<div class="task-item"><div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})">${t.done ? '✓' : ''}</div><div class="task-text ${t.done ? 'done' : ''}">${t.task}</div><span class="task-tag ${tagClass[t.category] || 'tag-copy'}">${tagLabel[t.category] || t.category}</span></div>`
+  ).join('') + '</div>';
+}
+
+renderTasks();
+</script>
+</body>
+</html>
